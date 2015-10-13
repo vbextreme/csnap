@@ -1,0 +1,90 @@
+----------------
+| INTRODUZIONE |
+----------------
+
+S.N.A.P. è un protocollo di comunicazione semplice da usare, questa è la libreria che ne permette l'utilizzo tramite il linguaggio C.
+Il codice della libreria è stato scritto per semplificare il porting anche verso i dispositivi embedded.
+Il makefile creerà la libreria solo per gnu/linux.
+
+------------------
+| CONFIGURAZIONE |
+------------------
+
+Durante la fase di compilazione si può configurare la compilazione tramite alcune define:
+
+#define SNAP_FORCE_8BIT
+se viene definita verranno escluse le operazioni e funzion a 16/32 bit e i messaggi potranno avere dimensione massima di 256bye
+
+#define SNAP_DISABLE_16BIT
+se viene definita verranno escluse le funzioni a 16 bit
+
+#define SNAP_DISABLE_32BIT
+se viene definita verranno escluse le funzioni a 32 bit
+
+#define SNAP_DISABLE_ERROR_REPORTIN
+se viene definita verranno escluse le funzioni per scrivere i messaggi di errore sullo stderr
+
+----------
+| HOW TO |
+----------
+
+Per usare il protocollo SNAP la libreria si appoggia ad una struttura:
+
+[code]
+struct snapva
+{
+    szdata_t n;
+    uint8_t* d;
+};
+
+struct snap
+{
+    uint8_t hdb2;
+    uint8_t hdb1;
+    struct snapva dst;
+    struct snapva src;
+    struct snapva pro;
+    struct snapva dat;
+    struct snapva chk;
+};
+[/code]
+
+La struttura contiene i due header principali e 5 sottostrutture che memorizzano i valori aggiuntivi al protocollo.
+la struttura snapva contiene la dimensione della memoria usata da "d" in "n" di dimensioni 8 o 16 bit a seconda della configurazione.
+
+to be continued...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

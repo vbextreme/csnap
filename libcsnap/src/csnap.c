@@ -475,7 +475,7 @@ int8_t snap_write(struct snap* s, SnapWrite fnc)
     switch ( SNAP_GET_EDM(s->hdb1) )
     {
         default:
-        #ifndef SNAP_DISABLE_PRINTERROR
+        #ifndef SNAP_DISABLE_ERROR_REPORTING
             fprintf(stderr,"DEBUG ERROR!!!\n"); 
             exit(0);
         #endif
@@ -670,7 +670,7 @@ uint8_t snap_edm_get(struct snap* s)
     return SNAP_GET_EDM(s->hdb1);
 }
 
-#ifndef SNAP_DISABLE_PRINTERROR
+#ifndef SNAP_DISABLE_ERROR_REPORTIN
 void snap_err_print(int8_t e)
 {
     static const char* mper[] = { SNAP_STR_ERROR };

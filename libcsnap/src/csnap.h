@@ -129,7 +129,9 @@ uint8_t  snap_cmd_set(struct snap* s, uint8_t cmd);
 uint8_t  snap_cmd_get(struct snap* s);
 uint8_t  snap_edm_set(struct snap* s, uint8_t erd);
 uint8_t  snap_edm_get(struct snap* s);
-void snap_err_print(int8_t e);
+#ifndef SNAP_DISABLE_ERROR_REPORTING
+    void snap_err_print(int8_t e);
+#endif
 
 #endif
 
