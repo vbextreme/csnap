@@ -24,13 +24,12 @@ se viene definita verranno escluse le funzioni a 32 bit
 #define SNAP_DISABLE_ERROR_REPORTIN
 se viene definita verranno escluse le funzioni per scrivere i messaggi di errore sullo stderr
 
-----------
-| HOW TO |
-----------
+-------------
+| REFERENCE |
+-------------
 
 Per usare il protocollo SNAP la libreria si appoggia ad una struttura:
 
-[code]
 struct snapva
 {
     szdata_t n;
@@ -47,44 +46,350 @@ struct snap
     struct snapva dat;
     struct snapva chk;
 };
-[/code]
 
 La struttura contiene i due header principali e 5 sottostrutture che memorizzano i valori aggiuntivi al protocollo.
 la struttura snapva contiene la dimensione della memoria usata da "d" in "n" di dimensioni 8 o 16 bit a seconda della configurazione.
+libcsnap NON alloca dinamicamente la memoria ma la richiede durante la fase di inizializzazione della struttura, tale memoria potrà essere sia statica che dinamica.
 
-to be continued...
+Per permettere al protocollo di essere slegato dal chiamante sono state introdotti due tipi di funzioni:
 
+	typedef int8_t(*SnapRead)(uint8_t* buf);
 
+legge il dato che riporta in buf, ritorna -1 per errore causando l'uscita dalla funzione snap_read() oppure 0 per indicare che non c'è da leggere niente o 1 in caso di lettura.
 
+	typedef int8_t(*SnapWrite)(uint8_t buf);
 
-
-
-
-
-
-
-
+come sopra ma questo prototipo serve per l'uscita dei byte da snap_write()
 
 
 
+	uint8_t  snap_init(uint8_t* sbuf, struct snap* s, uint8_t szdst, uint8_t szsrc, uint8_t szpro, uint8_t errtype, szdata_t szdata);
+
+Questa funzione associa la memoria di "sbuf" in "s" anche se si riserva piu spazio per un contensto sarà inviato solo ciò che è stato settato nei due header che possono essere cambiati sucessivamente senza modificare la memoria.
+
+il primo parametro è il buffer dove verrà presa la memoria
+il secondo parametro è la struttura snap
+il terzo parametro è la dimensione massima che può essere assegnata all'indirizzo di destinazione (0/3 byte)
+il quarto parametro è la dimensione massima che può essere assegnata all'indirizzo di origine (0/3 byte)
+il quinto parametro è la dimensione massima che può essere assegnata ai flags del protocollo (0/3 byte)
+il sesto parametro è il tipo di gestione errore (vedi dopo)
+l'ultimo parametro è la dimensione massima del messaggio (0,1,2,3,4,5,6,7,8,16,32,64,128,256,512,user) se il valore è superiore a 0x0E (SNAP_DATA_512) viene impostata la modalità utente e viene settata la dimensione in n, tale dimensione.
+In modalità user il pacchetto invierà tutti i dati contenuti in "d".
+
+
+
+	szdata_t snap_numbyte(struct snap* s);
+
+ritorna il reale numero di byte contenuti nel messaggio (COMANDO + MESSAGGIO)
+
+
+
+	int8_t   snap_read(struct snap* s, SnapRead fnc);
+	int8_t   snap_read_async(struct snap* s, SnapRead fnc);
+
+la funzione legge una sequenza di byte tramite il secondo parametro "fnc" e lo salva in "s", in caso di successo restituisce 0.
+Tale funzione è bloccante e attende tutta la lettura del dato da remoto, in caso serva una funzione non bloccante usare la snap_read_async() che restituirà 0 in caso si abbia terminata una lettura, SNAP_WAIT in caso il buffer è in attesa dei dati oppure uno SNAP_ERR_ in base all'errore.
+
+
+
+	uint8_t  snap_cmp(struct snap* s, struct snap* t);
+
+Compara due strutture, 0 se sono uguali o -1 se s < t o 1 se s > t
+(dubbia utilità)
+
+
+
+	uint8_t  snap_3time(struct snap* s, struct snap* t, SnapRead fnc);
+
+passata una struttura snap s, legge altre due volte in t e le compara per verificarne la corretta ricezione.
+
+ 
+
+	int8_t   snap_check(struct snap* s, struct snap* t, SnapRead fnc);
+
+controlla la validicità del messaggio ricevuto "s" in base al tipo specificato nell'header 1.
+Se non viene passata la struttura t e la funzione di lettura non si potrà verificare la modalità 3 time.
+
+
+
+	int8_t   snap_write(struct snap* s, SnapWrite fnc);
+
+invia il messaggio contenuto in s calcolando il relativo edm e inviandolo tramite la funzione passata come secondo argomento.
 
 
 
 
+Ora l'elenco delle funzioni che settano o leggono le informazioni dal protocollo, tutti i valori settati NON influenzano il quantitativo di memoria settata durante l'inizializzazione della struttura ma SOLO il quantitativo di byte inviati.
+
+	uint8_t  snap_data_set(struct snap* s, szdata_t szdata);
+	uint16_t snap_data_get(struct snap* s);
+
+dimensone in byte messaggio
 
 
 
+	uint8_t  snap_ack_set(struct snap* s, uint8_t ack);
+	uint8_t  snap_ack_get(struct snap* s);
+
+tipo ack
 
 
 
+	uint8_t  snap_dst_set(struct snap* s, uint8_t dst);
+	uint8_t  snap_dst_get(struct snap* s);
+
+dimensone in byte destinazione
 
 
 
+	uint8_t  snap_src_set(struct snap* s, uint8_t src);
+	uint8_t  snap_src_get(struct snap* s);
+
+dimensone in byte origine
 
 
 
+	uint8_t  snap_pro_set(struct snap* s, uint8_t pro);
+	uint8_t  snap_pro_get(struct snap* s);
+
+dimensone in byte protocollo
 
 
+
+	uint8_t  snap_cmd_set(struct snap* s, uint8_t cmd);
+	uint8_t  snap_cmd_get(struct snap* s);
+
+attiva o disattiva modalità comando
+
+
+
+	uint8_t  snap_edm_set(struct snap* s, uint8_t erd);
+	uint8_t  snap_edm_get(struct snap* s);
+
+
+modalità di rilevazione errore.
+
+
+
+---------------
+| DEFINIZIONI |
+---------------
+
+Tipi ack
+
+	SNAP_ACK_NO
+
+no ack
+
+	SNAP_ACK_REQ
+
+richiesto ack
+
+	SNAP_ACK_RES
+
+risposta ack
+
+	SNAP_ACK_ERR
+
+nack
+
+
+
+Modalità controllo errori
+
+	SNAP_EDM_NONE
+
+nessun controllo
+
+	SNAP_EDM_3TIM
+
+invio 3 volte dato
+
+	SNAP_EDM_CHKS
+
+checksum
+
+	SNAP_EDM_8CRC
+
+crc8
+
+	SNAP_EDM_16CR
+
+crc16
+
+	SNAP_EDM_32CR
+
+crc32
+
+	SNAP_EDM_SFEC
+
+non ancora implementato nel protocollo
+
+	SNAP_EDM_USER
+
+modalità utente.
+
+
+
+Dimensione mesaggio in byte
+
+	SNAP_DATA_0
+	SNAP_DATA_1
+	SNAP_DATA_2
+	SNAP_DATA_3
+	SNAP_DATA_4
+	SNAP_DATA_5
+	SNAP_DATA_6
+	SNAP_DATA_7
+	SNAP_DATA_8
+	SNAP_DATA_16
+	SNAP_DATA_32
+	SNAP_DATA_64
+	SNAP_DATA_128
+	SNAP_DATA_256
+	SNAP_DATA_512
+	SNAP_DATA_USER
+
+
+
+tipi di errori ritornati:
+
+	SNAP_OK
+
+ok
+
+	SNAP_ERR_SYNC
+
+il primo dato letto non corrisponde alla sincronizzazione
+
+	SNAP_WAIT
+
+snap in attesa di dati da remoto
+
+	SNAP_ERR_CORRUPT
+
+controllo dati errato
+
+	SNAP_ERR_GET_SYNC
+	SNAP_ERR_GET_HDB2
+	SNAP_ERR_GET_HDB1
+	SNAP_ERR_GET_DADR
+	SNAP_ERR_GET_SADR
+	SNAP_ERR_GET_PROF
+	SNAP_ERR_GET_DATA
+	SNAP_ERR_GET_ECHK
+
+Invio o ricezione dato non avvenuta, cause esterne(fnc)
+
+	SNAP_ERR_NOTERROR
+
+errore sconosciuto
+
+
+
+----------
+| ESEMPI |
+----------
+
+	inviare un pacchetto con solo un byte di messaggio al terminale 
+
+#include <stdint.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <csnap.h>
+
+//funzione che invia il dato al terminale
+int8_t snapw(uint8_t w)
+{
+    putchar(w);
+    return 1;//ok
+}
+
+int main(int argc, char** argv)
+{
+    uint8_t buf[3];
+    struct snap s;
+    
+    int ret;
+    
+    snap_init(buf,&s,0,0,0,SNAP_EDM_NONE,SNAP_DATA_1); //init memoria
+
+    //scrivo il messaggio
+    s.dat.d[0] = 'a';
+	
+    ret = snap_write(&s, snapw);//invio messaggio
+    snap_err_print(ret); //stampo errori in stderr
+    puts("");
+    
+    return 0;
+}
+
+
+	inviare un pacchetto con destinazione e origine di un dato con il controllo crc8 al terminale
+
+int main(int argc, char** argv)
+{
+    uint8_t buf[5];
+    struct snap s;
+    
+    int ret;
+    
+    snap_init(buf,&s,1,1,0,SNAP_EDM_8CRC,SNAP_DATA_1); //init memoria
+	
+    //scrivo origine
+    s.src.d[0] = 1
+
+    //scrivo destinazione
+    s.dst.d[0] = 2
+
+    //scrivo il messaggio
+    s.dat.d[0] = 'a';
+
+
+    ret = snap_write(&s, snapw);//invio messaggio
+    snap_err_print(ret); //stampo errori in stderr
+    puts("");
+    
+    return 0;
+}
+
+
+	ricevere un qualsiasi tipo di pacchetto inviato da terminale
+
+#include <stdint.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <csnap.h>
+
+//leggo carattere da terminale
+int8_t snapr(uint8_t* r)
+{
+    int ch = getchar();
+    if ( ch < 0 ) return -1; //ritorno l'errore
+    *r = ch;
+    return 1;//ok
+}
+
+int main(int argc, char** argv)
+{
+    uint8_t buf[1024];
+    struct snap s;
+    
+    int ret;
+    
+    snap_init(buf,&s,3,3,3,SNAP_EDM_8CRC,SNAP_DATA_512);
+    
+    ret = snap_read(&s, snapr);//leggo
+    snap_err_print(ret);
+
+    ret = snap_check(&sr,NULL,NULL);//controllo validità senza 3tim
+    snap_err_print(ret);
+    puts("");
+    
+    return 0;
+}
 
 
 

@@ -585,16 +585,15 @@ uint8_t snap_init(uint8_t* sbuf, struct snap* s, uint8_t szdst, uint8_t szsrc, u
 
 uint8_t snap_data_set(struct snap* s, szdata_t szdata)
 {
-    if ( szdata < 0x10 )
+    if ( szdata < SNAP_DATA_USER )
     {
         SNAP_SET_NUMDAT(s->hdb1, szdata);
         s->dat.n = snap_numbyte(s);
+        return 0;
     }
-    else
-    {
-        SNAP_SET_NUMDAT(s->hdb1, SNAP_DATA_USER);
-        s->dat.n = szdata;
-    }
+    
+    SNAP_SET_NUMDAT(s->hdb1, SNAP_DATA_USER);
+    s->dat.n = szdata;
     
     return 0;
 }
