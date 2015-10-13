@@ -1,5 +1,8 @@
 libcsnap v0.0 && snap v0.0
 ==========================
+gestione protocollo snap tramite libreria scritta per il c esportabile anche sui sitemi embedded aggiunto comando bash per usare il protocollo snap.
+
+http://www.hth.com/snap/
 
 Stato:
 ======
