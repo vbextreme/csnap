@@ -5,29 +5,20 @@
 #include "snaproto.h"
 #include "csnap.h"
 
-static uint8_t _bitcount(uint8_t v)
-{
-    return v;
-    uint8_t i = 8;
-    uint8_t r = 0;
-    while ( i-- ) r += (v >> i) & 0x01;
-    return r;
-}
-
-uint8_t snap_bitcount(struct snap* s)
+uint8_t snap_checksum(struct snap* s)
 {
     szdata_t i;
     uint8_t v = 0;
-    v += _bitcount(s->hdb2);
-    v += _bitcount(s->hdb1);
+    v += s->hdb2;
+    v += s->hdb1;
     i = SNAP_GET_DSTADR(s->hdb2);
-    while( i-- ) v += _bitcount(s->dst.d[i]);
+    while( i-- ) v += s->dst.d[i];
     i = SNAP_GET_SRCADR(s->hdb2);
-    while( i-- ) v += _bitcount(s->src.d[i]);
+    while( i-- ) v += s->src.d[i];
     i = SNAP_GET_PROTOF(s->hdb2);
-    while( i-- ) v += _bitcount(s->pro.d[i]);
+    while( i-- ) v += s->pro.d[i];
     i = snap_numbyte(s);
-    while( i-- ) v += _bitcount(s->dat.d[i]);
+    while( i-- ) v += s->dat.d[i];
     
     return v;
 }
@@ -373,7 +364,7 @@ int8_t snap_check(struct snap* s, struct snap* t, SnapRead fnc)
         
         case SNAP_EDM_CHKS:
         {
-            uint8_t c = snap_bitcount(s);
+            uint8_t c = snap_checksum(s);
             return (c == *s->chk.d) ? 0 : -SNAP_ERR_CORRUPT;
         }
         
@@ -489,7 +480,7 @@ int8_t snap_write(struct snap* s, SnapWrite fnc)
         
         case SNAP_EDM_CHKS:
             p = 1;
-            *((uint8_t*)(s->chk.d)) = snap_bitcount(s);
+            *((uint8_t*)(s->chk.d)) = snap_checksum(s);
         break;
         
         case SNAP_EDM_8CRC:
@@ -701,7 +692,7 @@ void test()
         crc8 = _crc8(*str,crc8);
         crc16 = _crc16(*str,crc16);
         crc32 = _crc32(*str,crc32);
-        cheks += _bitcount(*str);
+        cheks += *str;
     }
     crc32 ^= 0xFFFFFFFF;
     
@@ -720,7 +711,7 @@ void test()
         crc8 = _crc8(*str,crc8);
         crc16 = _crc16(*str,crc16);
         crc32 = _crc32(*str,crc32);
-        cheks += _bitcount(*str);
+        cheks += *str;
     }
     crc32 ^= 0xFFFFFFFF;
     

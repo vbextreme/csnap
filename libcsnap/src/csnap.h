@@ -99,7 +99,7 @@ struct snap
 #define SNAP_ERR_NOTERROR 0x0C
 #define SNAP_ERR_COUNT    0x0D
 
-uint8_t  snap_bitcount(struct snap* s);
+uint8_t snap_checksum(struct snap* s);
 uint8_t  snap_crc8(struct snap* s);
 #ifndef SNAP_DISABLE_16BIT
     uint16_t snap_crc16(struct snap* s);
