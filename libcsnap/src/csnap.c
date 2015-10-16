@@ -7,6 +7,7 @@
 
 static uint8_t _bitcount(uint8_t v)
 {
+    return v;
     uint8_t i = 8;
     uint8_t r = 0;
     while ( i-- ) r += (v >> i) & 0x01;
@@ -692,7 +693,7 @@ void test()
     uint8_t crc8 = 0;
     uint16_t crc16 = 0;
     uint32_t crc32 = 0xFFFFFFFF;
-    uint32_t cheks = 0;
+    uint8_t cheks = 0;
     
     
     for( i = 0; i < l; ++i, ++str)
