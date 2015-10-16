@@ -37,14 +37,13 @@ static uint8_t _crc8(uint8_t v, uint8_t crc)
     uint8_t fb;
     uint8_t i;
     
+    crc ^= v;
     i = 8;
     while( i-- )
     {
-        fb = (crc ^ v) & 0x01;
-        if ( 0x01 == fb) crc = crc ^ 0x18;
-        crc = (crc >> 1) & 0x7F;
-        if ( 0x01 == fb ) crc = crc | 0x80;
-        v = v >> 1;
+        fb = crc & 1;
+        crc >>= 1;
+        if ( fb ) crc ^= 0x8C;
     }
     return crc;
 }
@@ -66,6 +65,7 @@ uint8_t snap_crc8(struct snap* s)
     
     return c;
 }
+
 
 #ifndef SNAP_DISABLE_16BIT
 //XMODEM start 0x0000
@@ -105,13 +105,14 @@ static uint32_t _crc32(uint8_t v, uint32_t crc)
     uint32_t mask;
     uint8_t i = 8;
     
-    crc = crc ^ v;
+    crc ^= v;
     while ( i-- )
     { 
-        mask = -(crc & 1);
-        crc = (crc >> 1) ^ (0xEDB88320 & mask);
+        mask = crc & 1;
+        crc >>= 1;
+        if ( mask ) crc ^= 0xEDB88320;
     }
-    return ~crc;
+    return crc;
 }
 
 uint32_t snap_crc32(struct snap* s)
@@ -129,7 +130,7 @@ uint32_t snap_crc32(struct snap* s)
     n = snap_numbyte(s);
     for(i = 0; i < n; ++i) c = _crc32(s->dat.d[i], c);
     
-    return c;
+    return c ^ 0xFFFFFFFF;
 }
 #endif
 
@@ -682,15 +683,16 @@ void snap_err_print(int8_t e)
 #endif
 
 #ifdef _APP
-void test_crc()
+void test()
 {
-    char *str = "123456789";
+    char *str = "SNAP";
     int l = strlen(str);
     
     int i;
     uint8_t crc8 = 0;
     uint16_t crc16 = 0;
     uint32_t crc32 = 0xFFFFFFFF;
+    uint32_t cheks = 0;
     
     
     for( i = 0; i < l; ++i, ++str)
@@ -698,8 +700,31 @@ void test_crc()
         crc8 = _crc8(*str,crc8);
         crc16 = _crc16(*str,crc16);
         crc32 = _crc32(*str,crc32);
+        cheks += _bitcount(*str);
     }
+    crc32 ^= 0xFFFFFFFF;
     
-    printf("crc8: 0x%X\ncrc16: 0x%X\ncrc32: 0x%X\n",crc8,crc16,crc32);
+    puts("SNAP");
+    printf("checksum:0x%X\ncrc8: 0x%X\ncrc16: 0x%X\ncrc32: 0x%X\n",cheks,crc8,crc16,crc32);
+    
+    str = "snap";
+    l = strlen(str);
+    cheks = 0;
+    crc8 = 0;
+    crc16 = 0;
+    crc32 = 0xFFFFFFFF;
+    
+    for( i = 0; i < l; ++i, ++str)
+    {
+        crc8 = _crc8(*str,crc8);
+        crc16 = _crc16(*str,crc16);
+        crc32 = _crc32(*str,crc32);
+        cheks += _bitcount(*str);
+    }
+    crc32 ^= 0xFFFFFFFF;
+    
+    puts("snap");
+    printf("checksum:0x%X\ncrc8: 0x%X\ncrc16: 0x%X\ncrc32: 0x%X\n",cheks,crc8,crc16,crc32);
+    
 }
 #endif

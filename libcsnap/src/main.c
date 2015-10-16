@@ -6,7 +6,7 @@
 #include <string.h>
 #include "csnap.h"
 
-/*
+
 //ESEMPIO invio
 //funzione che invia il dato al terminale
 int8_t snapw(uint8_t w)
@@ -17,6 +17,8 @@ int8_t snapw(uint8_t w)
 
 int main(int argc, char** argv)
 {
+    test();
+    return 0;
     uint8_t buf[3];
     struct snap s;
     
@@ -29,7 +31,7 @@ int main(int argc, char** argv)
     
     return 0;
 }
-*/
+
 
 /*
 //ESEMPIO ricezione
