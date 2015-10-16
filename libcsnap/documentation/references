@@ -355,7 +355,7 @@ int main(int argc, char** argv)
 }
 
 
-	ricevere un qualsiasi tipo di pacchetto inviato da terminale
+	ricevere un qualsiasi tipo di pacchetto inviato da terminale con controllo crc8
 
 #include <stdint.h>
 #include <stdlib.h>

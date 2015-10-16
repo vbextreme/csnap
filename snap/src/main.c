@@ -3,8 +3,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <csnap.h>
-
-#include "main.h"
 #include "optex.h"
 
 static int32_t extendprint = 0;
@@ -160,7 +158,7 @@ int main(int argc, char** argv)
             
             case 'h':
                 opt_help();
-            break;
+            return 0;
             
             default:
                  fprintf(stderr,"error argument\n"); 
