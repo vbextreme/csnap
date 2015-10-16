@@ -1,0 +1,130 @@
+----------------
+| INTRODUZIONE |
+----------------
+
+S.N.A.P. è un protocollo di comunicazione semplice da usare, questo comando ne permette l'utilizzo tramite il terminale..
+ricordarsi di compilare e installare la libreria csnap.
+
+-----------------
+| USO PARAMETRI |
+-----------------
+
+Il comando snap ha diversi parametri, si possono usare sia in forma ridotta "-p" sia in forma estesa "--param".
+Il valore del parametro sarà il sucessivo argomento passato, il programma accetta anche il raggruppamento dei parametri in formato ridotto e in questo caso i valori saranno inseriti in sucessione.
+
+(per il momento accetto solo caratteri ascii, da modificare)
+
+-------------
+| PARAMETRI |
+-------------
+
+	-d --dstadr <address> 
+
+imposta l'indirizzo di destinazione, se non vieme settato non verrà inviato l'indirizzo
+
+
+
+	-s --srcadr <address>
+
+imposta l'indirizzo di destinazione, se non vieme settato non verrà inviato l'indirizzo
+
+
+
+	-a --ack <tipo> 
+
+imposta il tipo di ack che può assumere i seguenti valori "no", "req", "res", "err".
+
+
+
+	-e --edm <tipo> 
+
+imposta il tipo di error detection mode e può assumenre "none", "chk", "3tim", "crc8", "crc16", "crc32".
+
+
+
+	-M --msgsize <sz> 
+
+imposta la dimensione del messaggio
+
+
+
+	-m --message <str>
+
+scrive il mesaaggio
+
+
+
+	-x --extend
+
+scrive il messaggio in modalità estesa, leggibile.
+
+
+
+	-r --read
+
+legge un messaggio
+
+
+
+	-h --help
+visualizza l'help
+
+
+----------
+| ESEMPI |
+----------
+
+	visualizzare sullo schermo in modalità estesa un messaggio con indirizzo destinazione "a" e errore crc8
+
+$ snap --extend --dstadr a --edm crc8
+
+oppure
+
+$ snap -x -d a -e crc8
+
+oppure
+
+$snap -xde a crc8
+
+
+
+
+	salva su un file un messaggio lungo 4 caratteri, di valore "ciao", con indirizzo destinazione "a" e errore crc8
+
+$ snap --dstadr a --msgsize 4 --message ciao --edm crc8 > test
+
+oppure
+
+$ snap -d a -M 4 -m ciao -e crc8 > test
+
+oppure
+
+$snap -dMme a 4 ciao crc8 > test
+
+
+
+	legge da un file un messaggio con controllo errore crc8 e lo visualizza in modalità estesa.
+
+$ cat ./test | snap --extend --read --edm crc8
+
+oppure
+
+$ cat ./test | snap -x -r -e crc8
+
+oppure
+
+$ cat ./test | snap -xre crc8
+
+
+
+
+
+
+
+
+
+
+
+
+
+
