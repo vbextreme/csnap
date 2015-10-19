@@ -97,7 +97,16 @@ struct snap
 #define SNAP_ERR_GET_DATA 0x0A
 #define SNAP_ERR_GET_ECHK 0x0B
 #define SNAP_ERR_NOTERROR 0x0C
-#define SNAP_ERR_COUNT    0x0D
+#define SNAP_ERR_CMD      0x0D
+#define SNAP_ERR_COUNT    0x0E
+
+#define SNAP_MSGSZ_NOSET 0
+#define SNAP_MSGSZ_AUTO  1
+#define SNAP_MSGSZ_USER  2
+
+#define SNAP_CMD_MAX    128
+#define SNAP_CMD_REPLY 0x80
+
 
 uint8_t snap_checksum(struct snap* s);
 uint8_t  snap_crc8(struct snap* s);
@@ -114,8 +123,10 @@ uint8_t  snap_cmp(struct snap* s, struct snap* t);
 uint8_t  snap_3time(struct snap* s, struct snap* t, SnapRead fnc);
 int8_t   snap_check(struct snap* s, struct snap* t, SnapRead fnc);
 int8_t   snap_write(struct snap* s, SnapWrite fnc);
+int8_t snap_sendcmd(struct snap* s, uint8_t cmd, int8_t isreply, SnapWrite fnc);
 uint8_t  snap_init(uint8_t* sbuf, struct snap* s, uint8_t szdst, uint8_t szsrc, uint8_t szpro, uint8_t errtype, szdata_t szdata);
 uint8_t  snap_data_set(struct snap* s, szdata_t szdata);
+uint8_t  snap_data_auto(struct snap* s, szdata_t szdata, int8_t forceszuser);
 uint16_t snap_data_get(struct snap* s);
 uint8_t  snap_ack_set(struct snap* s, uint8_t ack);
 uint8_t  snap_ack_get(struct snap* s);
@@ -129,6 +140,11 @@ uint8_t  snap_cmd_set(struct snap* s, uint8_t cmd);
 uint8_t  snap_cmd_get(struct snap* s);
 uint8_t  snap_edm_set(struct snap* s, uint8_t erd);
 uint8_t  snap_edm_get(struct snap* s);
+uint8_t  snap_message_set(struct snap* s, void* data, szdata_t sz, int8_t setsize);//NEW
+uint8_t  snap_message_get(struct snap* s, void* data, szdata_t sz); //NEW
+uint8_t* snap_message_ptr(struct snap* s); //NEW
+
+
 #ifndef SNAP_DISABLE_ERROR_REPORTING
     void snap_err_print(int8_t e);
 #endif

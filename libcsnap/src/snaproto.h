@@ -58,7 +58,8 @@
                        "snap error r/w dst address","snap error r/w src address", \
                        "snap error r/w protocol flags", \
                        "snap error r/w data","snap error r/w check", \
-                       "snap error number error"
+                       "snap error number error", \
+                       "snap error command"
                        
 #define SNAP_GET_DSTADR(H2) ( (H2 >> SNAP_SHIFT_DSTADR) & SNAP_MASK_DSTADR )
 #define SNAP_GET_SRCADR(H2) ( (H2 >> SNAP_SHIFT_SRCADR) & SNAP_MASK_SRCADR )
@@ -67,6 +68,14 @@
 #define SNAP_GET_CMD(H1)    ( (H1 >> SNAP_SHIFT_CMD) & SNAP_MASK_CMD )
 #define SNAP_GET_EDM(H1)    ( (H1 >> SNAP_SHIFT_EDM) & SNAP_MASK_EDM )
 #define SNAP_GET_NUMDAT(H1) ( (H1 >> SNAP_SHIFT_NUMDAT) & SNAP_MASK_NUMDAT )
+#define SNAP_CLR_DSTADR(H2)   H2 &= ~(SNAP_MASK_DSTADR << SNAP_SHIFT_DSTADR)
+#define SNAP_CLR_SRCADR(H2)   H2 &= ~(SNAP_MASK_SRCADR << SNAP_SHIFT_SRCADR)
+#define SNAP_CLR_PROTOF(H2)   H2 &= ~(SNAP_MASK_PROTOF << SNAP_SHIFT_PROTOF)
+#define SNAP_CLR_ACK(H2)      H2 &= ~(SNAP_MASK_ACK << SNAP_SHIFT_ACK)
+#define SNAP_CLR_CMD(H1)      H1 &= ~(SNAP_MASK_CMD << SNAP_SHIFT_CMD)
+#define SNAP_CLR_EDM(H1)      H1 &= ~(SNAP_MASK_EDM << SNAP_SHIFT_EDM)
+#define SNAP_CLR_NUMDAT(H1)   H1 &= ~(SNAP_MASK_NUMDAT << SNAP_SHIFT_NUMDAT)
+
 #define SNAP_SET_DSTADR(H2,B) H2 |= (((B) << SNAP_SHIFT_DSTADR) & (SNAP_MASK_DSTADR << SNAP_SHIFT_DSTADR))
 #define SNAP_SET_SRCADR(H2,B) H2 |= (((B) << SNAP_SHIFT_SRCADR) & (SNAP_MASK_SRCADR << SNAP_SHIFT_SRCADR))
 #define SNAP_SET_PROTOF(H2,B) H2 |= (((B) << SNAP_SHIFT_PROTOF) & (SNAP_MASK_PROTOF << SNAP_SHIFT_PROTOF))

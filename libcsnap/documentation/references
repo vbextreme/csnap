@@ -50,6 +50,9 @@ struct snap
 La struttura contiene i due header principali e 5 sottostrutture che memorizzano i valori aggiuntivi al protocollo.
 la struttura snapva contiene la dimensione della memoria usata da "d" in "n" di dimensioni 8 o 16 bit a seconda della configurazione.
 libcsnap NON alloca dinamicamente la memoria ma la richiede durante la fase di inizializzazione della struttura, tale memoria potrà essere sia statica che dinamica.
+Snap salva i dati dal byte MSB a LSB, per semplificare la gestione dei dati la struttura lavora in maniera lineare e verrà invertita solo durante l'invio dei dati.
+Ad esempio se si volesse inviare la stringa "ciao" la si può copiare dentro ".dat.d" tramite la classica "strcpy()", sarà poi compito della "snap_write()" inviare correttamente la stringa come "oaic" e la funzione "snap_read()" la riassemblerà correttamente in "ciao".
+Se si usa la modalità comando il primo byte della struttura ".dat.d" è assegnato al tipo di comando, per semplificare la gestione dei dati sono state introdotte le funzioni "snap_message_" che assicurano la copia, lettura e manipolazione in sicurezza.
 
 Per permettere al protocollo di essere slegato dal chiamante sono state introdotti due tipi di funzioni:
 
@@ -118,14 +121,22 @@ invia il messaggio contenuto in s calcolando il relativo edm e inviandolo tramit
 
 
 
+	int8_t snap_sendcmd(struct snap* s, uint8_t cmd, int8_t isreply, SnapWrite fnc);
+
+Invia il messaggio con un comando specificato in "cmd", 0 e 1 sono riservati e il massimo è 127.
+"isreply" a true quando è una risposta.
+
 
 Ora l'elenco delle funzioni che settano o leggono le informazioni dal protocollo, tutti i valori settati NON influenzano il quantitativo di memoria settata durante l'inizializzazione della struttura ma SOLO il quantitativo di byte inviati.
 
 	uint8_t  snap_data_set(struct snap* s, szdata_t szdata);
+	uint8_t  snap_data_auto(struct snap* s, szdata_t szdata, int8_t forceszuser);
 	uint16_t snap_data_get(struct snap* s);
 
-dimensone in byte messaggio
-
+"_set" se szdata è un flag < SNAP_DATA_USER viene usata tale dimensione se invece il valore è superiore/uguale a _USER(16) allora  verrà impostata la modalità utente e il numero di sz verrà memorizzato in n.
+"_auto" se "forceszuser" è false sarà cercato il flag superiore vicino alla dimensione passata in szdata( es szdata = 30, n = SNAP_DATA_32) se invece "forceszuser" è true allora srà sempre settata la modalità "_USER" per qualsiasi valore passato.
+"_get" ritorna la dimensione del messaggio comprensivo di command.
+Se la modalità comando è inclusa il byte cmd sarà inserito automaticamente, ser si passa (szdata=0) verrà settato (szdata=1)
 
 
 	uint8_t  snap_ack_set(struct snap* s, uint8_t ack);
@@ -169,6 +180,15 @@ attiva o disattiva modalità comando
 
 modalità di rilevazione errore.
 
+
+
+	uint8_t  snap_message_set(struct snap* s, void* data, szdata_t sz, int8_t setsize);
+	uint8_t  snap_message_get(struct snap* s, void* data, szdata_t sz);
+	uint8_t* snap_message_ptr(struct snap* s);
+
+"_set" copia data in ".dat.d" senza preoccuparsi se il primo byte è un comando o meno.Il parametro setsize può assumere tre valori: "_NOSET" che non modificherà il valore di ".dat.n", "_AUTO" richiamerà internamente la funzione "_data_auto" per determinare la dimensione o "_USER" che seterà la dimensione del messaggio uguale a sz.
+"_get" copia il messaggio in data senza comando.
+"_ptr" ritorna il puntatore al messaggio senza comando.
 
 
 ---------------
@@ -252,6 +272,14 @@ Dimensione mesaggio in byte
 
 
 
+Modalità dimen sione messaggio
+
+	SNAP_MSGSZ_NOSET
+	SNAP_MSGSZ_AUTO
+	SNAP_MSGSZ_USER
+
+
+
 tipi di errori ritornati:
 
 	SNAP_OK
@@ -285,7 +313,9 @@ Invio o ricezione dato non avvenuta, cause esterne(fnc)
 
 errore sconosciuto
 
+	SNAP_ERR_CMD
 
+comando non valido
 
 ----------
 | ESEMPI |
@@ -355,7 +385,7 @@ int main(int argc, char** argv)
 }
 
 
-	ricevere un qualsiasi tipo di pacchetto inviato da terminale con controllo crc8
+	ricevere un qualsiasi tipo di pacchetto inviato da terminale
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -379,7 +409,7 @@ int main(int argc, char** argv)
     
     int ret;
     
-    snap_init(buf,&s,3,3,3,SNAP_EDM_8CRC,SNAP_DATA_512);
+    snap_init(buf,&s,3,3,3,SNAP_EDM_32CR,SNAP_DATA_512);
     
     ret = snap_read(&s, snapr);//leggo
     snap_err_print(ret);

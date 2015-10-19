@@ -515,6 +515,25 @@ int8_t snap_write(struct snap* s, SnapWrite fnc)
     
 }
 
+int8_t snap_sendcmd(struct snap* s, uint8_t cmd, int8_t isreply, SnapWrite fnc)
+{
+    if ( cmd >= SNAP_CMD_MAX ) return -SNAP_ERR_CMD;
+    SNAP_SET_CMD(s->hdb1, 1);
+    SNAP_CLR_ACK(s->hdb2);
+    if ( isreply )
+    {
+        SNAP_SET_ACK(s->hdb2, SNAP_ACK_RES);
+        cmd |= SNAP_CMD_REPLY;
+    }
+    else
+    {
+        SNAP_SET_ACK(s->hdb2, SNAP_ACK_REQ);
+    }
+    s->dat.d[0] = cmd;
+    
+    return snap_write(s,fnc);
+}
+
 uint8_t snap_init(uint8_t* sbuf, struct snap* s, uint8_t szdst, uint8_t szsrc, uint8_t szpro, uint8_t errtype, szdata_t szdata)
 {
     s->hdb2 = 0;
@@ -578,16 +597,72 @@ uint8_t snap_init(uint8_t* sbuf, struct snap* s, uint8_t szdst, uint8_t szsrc, u
 
 uint8_t snap_data_set(struct snap* s, szdata_t szdata)
 {
+    SNAP_CLR_NUMDAT(s->hdb1);
+    
     if ( szdata < SNAP_DATA_USER )
     {
         SNAP_SET_NUMDAT(s->hdb1, szdata);
-        s->dat.n = snap_numbyte(s);
+        return 0;
+    }
+    
+    SNAP_SET_NUMDAT(s->hdb1, SNAP_DATA_USER);
+    if ( SNAP_GET_CMD(s->hdb1) ) ++szdata;
+    s->dat.n = szdata;
+    
+    return 0;
+}
+
+uint8_t snap_data_auto(struct snap* s, szdata_t szdata, int8_t forceszuser)
+{
+    if ( SNAP_GET_CMD(s->hdb1) ) ++szdata;
+    
+    SNAP_CLR_NUMDAT(s->hdb1);
+    
+    if ( szdata > 511 || forceszuser)
+    {
+        SNAP_SET_NUMDAT(s->hdb1, SNAP_DATA_USER);
+        s->dat.n = szdata;
+        return 0;
+    }
+        
+    if ( szdata < SNAP_DATA_16 )
+    {
+        SNAP_SET_NUMDAT(s->hdb1, szdata);
+        return 0;
+    }
+    else if ( szdata < 16 )
+    {
+        SNAP_SET_NUMDAT(s->hdb1, SNAP_DATA_16);
+        return 0;
+    }
+    else if ( szdata < 32 )
+    {
+        SNAP_SET_NUMDAT(s->hdb1, SNAP_DATA_32);
+        return 0;
+    }
+    else if ( szdata < 64 )
+    {
+        SNAP_SET_NUMDAT(s->hdb1, SNAP_DATA_64);
+        return 0;
+    }
+    else if ( szdata < 128 )
+    {
+        SNAP_SET_NUMDAT(s->hdb1, SNAP_DATA_128);
+        return 0;
+    }
+    else if ( szdata < 256 )
+    {
+        SNAP_SET_NUMDAT(s->hdb1, SNAP_DATA_256);
+        return 0;
+    }
+    else if ( szdata < 512 )
+    {
+        SNAP_SET_NUMDAT(s->hdb1, SNAP_DATA_512);
         return 0;
     }
     
     SNAP_SET_NUMDAT(s->hdb1, SNAP_DATA_USER);
     s->dat.n = szdata;
-    
     return 0;
 }
 
@@ -598,6 +673,7 @@ szdata_t snap_data_get(struct snap* s)
 
 uint8_t snap_ack_set(struct snap* s, uint8_t ack)
 {
+    SNAP_CLR_ACK(s->hdb2);
     SNAP_SET_ACK(s->hdb2,ack);
     return 0;
 }
@@ -609,6 +685,7 @@ uint8_t snap_ack_get(struct snap* s)
 
 uint8_t snap_dst_set(struct snap* s, uint8_t dst)
 {
+    SNAP_CLR_DSTADR(s->hdb2);
     SNAP_SET_DSTADR(s->hdb2,dst);
     return 0;
 }
@@ -620,6 +697,7 @@ uint8_t snap_dst_get(struct snap* s)
 
 uint8_t snap_src_set(struct snap* s, uint8_t src)
 {
+    SNAP_CLR_SRCADR(s->hdb2);
     SNAP_SET_SRCADR(s->hdb2,src);
     return 0;
 }
@@ -631,6 +709,7 @@ uint8_t snap_src_get(struct snap* s)
 
 uint8_t snap_pro_set(struct snap* s, uint8_t pro)
 {
+    SNAP_CLR_PROTOF(s->hdb2);
     SNAP_SET_PROTOF(s->hdb2,pro);
     return 0;
 }
@@ -642,6 +721,7 @@ uint8_t snap_pro_get(struct snap* s)
 
 uint8_t snap_cmd_set(struct snap* s, uint8_t cmd)
 {
+    SNAP_CLR_CMD(s->hdb1);
     SNAP_SET_CMD(s->hdb1,cmd);
     return 0;
 }
@@ -653,6 +733,7 @@ uint8_t snap_cmd_get(struct snap* s)
 
 uint8_t snap_edm_set(struct snap* s, uint8_t erd)
 {
+    SNAP_CLR_EDM(s->hdb1);
     SNAP_SET_EDM(s->hdb1,erd);
     return 0;
 }
@@ -660,6 +741,54 @@ uint8_t snap_edm_set(struct snap* s, uint8_t erd)
 uint8_t snap_edm_get(struct snap* s)
 {
     return SNAP_GET_EDM(s->hdb1);
+}
+
+uint8_t snap_message_set(struct snap* s, void* data, szdata_t sz, int8_t setsize)
+{
+    if ( !sz ) return 0;
+    if ( sz > s->dat.n ) return -1;
+    
+    if ( SNAP_GET_CMD(s->hdb1) )
+        memcpy(&s->dat.d[1],data,sz);
+    else
+        memcpy(s->dat.d,data,sz);
+    
+    switch(setsize)
+    {
+        case SNAP_MSGSZ_AUTO: snap_data_auto(s,sz,0); break;
+        case SNAP_MSGSZ_USER: snap_data_auto(s,sz,1); break;
+    }
+    
+    return 0;
+}
+
+uint8_t snap_message_get(struct snap* s, void* data, szdata_t sz)
+{
+    if ( !sz ) return 0;
+    
+    szdata_t rsz = snap_numbyte(s);
+    
+    if ( SNAP_GET_CMD(s->hdb1) )
+    {
+        --rsz;
+        if ( sz < rsz ) return -1;
+        memcpy(data, &s->dat.d[1], rsz);
+    }
+    else
+    {
+        if ( sz < rsz ) return -1;
+        memcpy(data, s->dat.d, rsz);
+    }
+    
+    return 0;
+}
+
+uint8_t* snap_message_ptr(struct snap* s)
+{
+    if ( SNAP_GET_CMD(s->hdb1) )
+        return &s->dat.d[1];
+    
+    return s->dat.d;
 }
 
 #ifndef SNAP_DISABLE_ERROR_REPORTIN
