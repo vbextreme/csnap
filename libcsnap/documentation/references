@@ -137,7 +137,7 @@ Ora l'elenco delle funzioni che settano o leggono le informazioni dal protocollo
 "_auto" se "forceszuser" è false sarà cercato il flag superiore vicino alla dimensione passata in szdata( es szdata = 30, n = SNAP_DATA_32) se invece "forceszuser" è true allora srà sempre settata la modalità "_USER" per qualsiasi valore passato.
 "_get" ritorna la dimensione del messaggio comprensivo di command.
 Se la modalità comando è inclusa il byte cmd sarà inserito automaticamente, ser si passa (szdata=0) verrà settato (szdata=1)
-
+La dimensione della memoria ".dat.n" verrà cambiata solo con "_USER" ATTENZIONE che il buffer passatogli possa ospitare il nuovo messaggio.
 
 	uint8_t  snap_ack_set(struct snap* s, uint8_t ack);
 	uint8_t  snap_ack_get(struct snap* s);

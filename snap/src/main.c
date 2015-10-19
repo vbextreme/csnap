@@ -11,6 +11,7 @@ static int32_t snapread = 0;
 struct argdef myarg[] = { { 'd', 'd',   "dstadr", OPT_ARG, NULL, "Destination address (val)"},
 						  { 's', 's',   "srcadr", OPT_ARG, NULL, "Source address(val)"},
 						  { 'a', 'a',      "ack", OPT_ARG, NULL, "Ack (no,req,res,err)"},
+                          { 'c', 'c',  "command", OPT_ARG, NULL, "Command mode ( val cmd  < 127 )"},
                           { 'e', 'e',      "edm", OPT_ARG, NULL, "Error detection mode(none,chk,3tim,crc8,crc16,crc32)"},
                           { 'M', 'M',  "msgsize", OPT_ARG, NULL, "Message size(strval)"},
                           { 'm', 'm',  "message", OPT_ARG, NULL, "Message(str)"},
@@ -103,6 +104,11 @@ int main(int argc, char** argv)
                     fprintf(stderr,"error ack not definited\n"); 
                     return -1;
                 }
+            break;
+            
+            case 'c':
+                snap_cmd_set(&s,1);
+                s.dat.d[0] = *carg;
             break;
             
             case 'e':
@@ -215,7 +221,7 @@ int main(int argc, char** argv)
     if (msgsz)
     {
         memset(s.dat.d,0,s.dat.n);
-        memcpy(s.dat.d,msg,msgsz);
+        snap_message_set(&s, msg, msgsz, SNAP_MSGSZ_NOSET);
     }
     
     snap_write(&s, snapw);

@@ -36,6 +36,12 @@ imposta il tipo di ack che può assumere i seguenti valori "no", "req", "res", "
 
 
 
+	-c --command <comando>
+
+setta modalità comando e invia il comando.
+
+
+
 	-e --edm <tipo> 
 
 imposta il tipo di error detection mode e può assumenre "none", "chk", "3tim", "crc8", "crc16", "crc32".
