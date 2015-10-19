@@ -1,12 +1,12 @@
-libcsnap v0.0 && snap v0.0
-==========================
+libcsnap v0.2 && snap v0.1.2
+============================
 gestione protocollo snap tramite libreria scritta per il c esportabile anche sui sitemi embedded aggiunto comando bash per usare il protocollo snap.
 
 http://www.hth.com/snap/
 
 Stato:
 ======
-* libreria manca cmd
+* bash command, manca modalità comando.
 
 Bug:
 ====
